@@ -33,14 +33,14 @@ func TestTelegramHandler_Handler(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	th, err := NewTelegramHandler(c.BotToken, c.MessageTemplate)
+	th, err := NewTelegramHandler(c.BotToken, c.Webhooks[0].MessageTemplate)
 	if err != nil {
 		t.Error(err)
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			reader := strings.NewReader(tt.args.json)
-			req, _ := http.NewRequest("POST", path.Join(c.Serve.Path, ""), reader)
+			req, _ := http.NewRequest("POST", path.Join(c.Webhooks[0].Path, "779348941"), reader)
 			req.Header.Set("Content-Type", "application/json")
 			w := httptest.NewRecorder()
 

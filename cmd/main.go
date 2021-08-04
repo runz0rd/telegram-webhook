@@ -24,13 +24,15 @@ func run(config string) error {
 	if err != nil {
 		return err
 	}
-	th, err := telegramwebhook.NewTelegramHandler(c.BotToken, c.MessageTemplate)
-	if err != nil {
-		return err
+	for _, w := range c.Webhooks {
+		th, err := telegramwebhook.NewTelegramHandler(c.BotToken, w.MessageTemplate)
+		if err != nil {
+			return err
+		}
+		http.HandleFunc(w.Path, th.Handler)
 	}
-	http.HandleFunc(c.Serve.Path, th.Handler)
-	log.Printf("serving on :%v", c.Serve.Port)
-	err = http.ListenAndServe(fmt.Sprintf(":%v", c.Serve.Port), nil)
+	log.Printf("serving on :%v", c.Port)
+	err = http.ListenAndServe(fmt.Sprintf(":%v", c.Port), nil)
 	if err != nil {
 		return err
 	}

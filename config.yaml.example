@@ -1,5 +1,5 @@
-serve:
-    path: "/webhook"
-    port: 8080
+webhooks:
+  - path: "/app1"
+    message_template: "{{.text}}"
 bot_token: ""
-message_template: "{{.text}}"
+port: 8080

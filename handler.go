@@ -15,15 +15,15 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type Serve struct {
-	Path string
-	Port int
+type Webhook struct {
+	Path            string `yaml:"path,omitempty"`
+	MessageTemplate string `yaml:"message_template,omitempty"`
 }
 
 type Config struct {
-	Serve           Serve  `yaml:"serve,omitempty"`
-	BotToken        string `yaml:"bot_token,omitempty"`
-	MessageTemplate string `yaml:"message_template,omitempty"`
+	Webhooks []Webhook `yaml:"webhooks,omitempty"`
+	BotToken string    `yaml:"bot_token,omitempty"`
+	Port     int       `yaml:"port,omitempty"`
 }
 
 func ReadConfig(path string) (*Config, error) {
@@ -62,9 +62,12 @@ func (th TelegramHandler) Handler(w http.ResponseWriter, req *http.Request) {
 }
 
 func (th TelegramHandler) handle(req *http.Request) error {
+	if req.Method != "POST" {
+		return fmt.Errorf("you need to use POST")
+	}
 	uriSlice := strings.Split(req.URL.Path, "/")
-	if len(uriSlice) < 2 {
-		return fmt.Errorf("need to specify telegram chat id at the end of the request uri (/webhook/12345)")
+	if len(uriSlice) < 2 || uriSlice[len(uriSlice)-1] == "" {
+		return fmt.Errorf("you need to specify the telegram chat id at the end of the request uri (/webhook/12345)")
 	}
 	chatId, err := strconv.ParseInt(uriSlice[len(uriSlice)-1], 10, 64)
 	if err != nil {
