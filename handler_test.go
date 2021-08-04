@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"path"
 	"strings"
 	"testing"
 )
@@ -17,7 +18,14 @@ func TestTelegramHandler_Handler(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{"pass", args{fmt.Sprintf("{%q:%q}", "text", "test_pass")}, false},
+		{"pass", args{fmt.Sprintf("{%q:%q, %q:{%q:%q}}",
+			"text", "A `pod` in namespace `default` has been `created`:\n`default/feedtransmission-8b7f44dff-bk8tg`",
+			"eventmeta", "reason", "created"),
+		}, false},
+		{"pass_no_message", args{fmt.Sprintf("{%q:%q, %q:{%q:%q}}",
+			"text", "A `pod` in namespace `default` has been `updated`:\n`default/feedtransmission-8b7f44dff-bk8tg`",
+			"eventmeta", "reason", "updated"),
+		}, false},
 		{"fail_template", args{fmt.Sprintf("{%q:%q}", "asd", "test")}, true},
 		{"fail_json", args{fmt.Sprintf("{{%q:%q}", "text", "test")}, true},
 	}
@@ -25,14 +33,14 @@ func TestTelegramHandler_Handler(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	th, err := NewTelegramHandler(c.BotToken, c.ChatId, c.MessageTemplate)
+	th, err := NewTelegramHandler(c.BotToken, c.MessageTemplate)
 	if err != nil {
 		t.Error(err)
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			reader := strings.NewReader(tt.args.json)
-			req, _ := http.NewRequest("POST", c.Serve.Path, reader)
+			req, _ := http.NewRequest("POST", path.Join(c.Serve.Path, ""), reader)
 			req.Header.Set("Content-Type", "application/json")
 			w := httptest.NewRecorder()
 
