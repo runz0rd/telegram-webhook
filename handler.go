@@ -21,6 +21,14 @@ type Webhook struct {
 	MessageTemplate string `yaml:"message_template,omitempty"`
 }
 
+func (w Webhook) ValidateTemplate() error {
+	_, err := template.New("").Parse(w.MessageTemplate)
+	if err != nil {
+		return errors.Wrap(err, "template cant be parsed")
+	}
+	return nil
+}
+
 type Config struct {
 	Webhooks []Webhook `yaml:"webhooks,omitempty"`
 	BotToken string    `yaml:"bot_token,omitempty"`
@@ -106,8 +114,12 @@ func (th TelegramHandler) handle(req *http.Request) error {
 
 func executeTemplate(templ string, data map[string]interface{}) (string, error) {
 	buf := new(bytes.Buffer)
-	if err := template.Must(template.New("").Parse(templ)).Execute(buf, data); err != nil {
-		return "", err
+	t, err := template.New("").Parse(templ)
+	if err != nil {
+		return "", errors.Wrap(err, "template cant be parsed")
+	}
+	if err := t.Execute(buf, data); err != nil {
+		return "", errors.Wrap(err, "template cant be executed")
 	}
 	return buf.String(), nil
 }
