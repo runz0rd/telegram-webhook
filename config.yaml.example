@@ -1,0 +1,6 @@
+serve:
+    path: "/webhook"
+    port: 8080
+bot_token: ""
+chat_id: 0
+message_template: "{{.text}}"
