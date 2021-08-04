@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 )
 
@@ -55,6 +56,7 @@ func NewTelegramHandler(botToken string, messageTemplate string) (*TelegramHandl
 func (th TelegramHandler) Handler(w http.ResponseWriter, req *http.Request) {
 	err := th.handle(req)
 	if err != nil {
+		err = errors.Wrapf(err, "[%v]", req.URL.Path)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		log.Print(err)
 	}
@@ -84,8 +86,7 @@ func (th TelegramHandler) handle(req *http.Request) error {
 		return &template.Error{}
 	}
 	if message == "" {
-		log.Print("message empty, nothing sent")
-		return nil
+		return fmt.Errorf("message empty, nothing sent")
 	}
 	_, err = th.botApi.Send(tgbotapi.MessageConfig{
 		BaseChat: tgbotapi.BaseChat{
@@ -99,7 +100,7 @@ func (th TelegramHandler) handle(req *http.Request) error {
 	if err != nil {
 		return err
 	}
-	log.Printf("successfully sent %q to %q", message, chatId)
+	log.Printf("[%v]: successfully sent %q to %d", req.URL.Path, message, chatId)
 	return nil
 }
 
