@@ -103,7 +103,7 @@ func (th TelegramHandler) handle(req *http.Request) error {
 		},
 		Text:                  message,
 		ParseMode:             tgbotapi.ModeMarkdown,
-		DisableWebPagePreview: false,
+		DisableWebPagePreview: true,
 	})
 	if err != nil {
 		return err

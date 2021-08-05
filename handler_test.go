@@ -11,7 +11,7 @@ import (
 
 func TestTelegramHandler_Handler(t *testing.T) {
 	kubewatch_tmpl := fmt.Sprintf("{{if .eventmeta}}{{if eq .eventmeta.reason %q %q}}{{.text}}{{end}}{{end}}", "created", "deleted")
-	bvtd_tmpl := "{{$diff := .diff_mins}}{{range $coin, $change := .coins}}{{$coin}} => {{$change}}% in {{$diff}} mins{{end}}"
+	bvtd_tmpl := "{{$diff := .diff_mins}}{{range $coin, $change := .coins}}{{$coin}} => {{$change}}% in {{$diff}} mins\n{{end}}"
 	type args struct {
 		json     string
 		template string
@@ -40,8 +40,8 @@ func TestTelegramHandler_Handler(t *testing.T) {
 			template: kubewatch_tmpl,
 		}, true},
 		{"bvtb_pass", args{
-			json: fmt.Sprintf("{%q:%d, %q:{%q:%q}}",
-				"diff_mins", 60, "coins", "BSBUSD", "69"),
+			json: fmt.Sprintf("{%q:%d, %q:{%q:%q, %q:%q}}",
+				"diff_mins", 60, "coins", "BSBUSD", "69", "TTBUSD", "11"),
 			template: bvtd_tmpl,
 		}, false},
 	}
