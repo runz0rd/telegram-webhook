@@ -10,37 +10,53 @@ import (
 )
 
 func TestTelegramHandler_Handler(t *testing.T) {
+	kubewatch_tmpl := fmt.Sprintf("{{if .eventmeta}}{{if eq .eventmeta.reason %q %q}}{{.text}}{{end}}{{end}}", "created", "deleted")
+	bvtd_tmpl := "{{$diff := .diff_mins}}{{range $coin, $change := .coins}}{{$coin}} => {{$change}}% in {{$diff}} mins{{end}}"
 	type args struct {
-		json string
+		json     string
+		template string
 	}
 	tests := []struct {
 		name    string
 		args    args
 		wantErr bool
 	}{
-		{"pass", args{fmt.Sprintf("{%q:%q, %q:{%q:%q}}",
-			"text", "A `pod` in namespace `default` has been `created`:\n`default/feedtransmission-8b7f44dff-bk8tg`",
-			"eventmeta", "reason", "created"),
+		{"kubewatch_pass", args{
+			json: fmt.Sprintf("{%q:%q, %q:{%q:%q}}",
+				"text", "testing `some` important `stuff`", "eventmeta", "reason", "created"),
+			template: kubewatch_tmpl,
 		}, false},
-		{"pass_no_message", args{fmt.Sprintf("{%q:%q, %q:{%q:%q}}",
-			"text", "A `pod` in namespace `default` has been `updated`:\n`default/feedtransmission-8b7f44dff-bk8tg`",
-			"eventmeta", "reason", "updated"),
+		{"kubewatch_no_message", args{
+			json: fmt.Sprintf("{%q:%q, %q:{%q:%q}}",
+				"text", "testing `some` important `stuff`", "eventmeta", "reason", "created"),
+			template: kubewatch_tmpl,
+		}, true},
+		{"kubewatch_fail_template", args{
+			json:     fmt.Sprintf("{%q:%q}", "asd", "test"),
+			template: kubewatch_tmpl,
+		}, true},
+		{"kubewatch_fail_json", args{
+			json:     fmt.Sprintf("{%q:%q}", "text", "test"),
+			template: kubewatch_tmpl,
+		}, true},
+		{"bvtb_pass", args{
+			json: fmt.Sprintf("{%q:%d, %q:{%q:%q}}",
+				"diff_mins", 60, "coins", "BSBUSD", "69"),
+			template: bvtd_tmpl,
 		}, false},
-		{"fail_template", args{fmt.Sprintf("{%q:%q}", "asd", "test")}, true},
-		{"fail_json", args{fmt.Sprintf("{{%q:%q}", "text", "test")}, true},
 	}
 	c, err := ReadConfig("config.yaml")
 	if err != nil {
 		t.Error(err)
 	}
-	th, err := NewTelegramHandler(c.BotToken, c.Webhooks[0].MessageTemplate)
-	if err != nil {
-		t.Error(err)
-	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			th, err := NewTelegramHandler(c.BotToken, tt.args.template)
+			if err != nil {
+				t.Error(err)
+			}
 			reader := strings.NewReader(tt.args.json)
-			req, _ := http.NewRequest("POST", path.Join(c.Webhooks[0].Path, "779348941"), reader)
+			req, _ := http.NewRequest("POST", path.Join("/webhook/", "779348941"), reader)
 			req.Header.Set("Content-Type", "application/json")
 			w := httptest.NewRecorder()
 

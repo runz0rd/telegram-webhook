@@ -87,11 +87,11 @@ func (th TelegramHandler) handle(req *http.Request) error {
 	data := make(map[string]interface{})
 	err = json.NewDecoder(req.Body).Decode(&data)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "json decode error")
 	}
 	message, err := executeTemplate(th.messageTemplate, data)
 	if err != nil {
-		return &template.Error{}
+		return err
 	}
 	if message == "" {
 		return fmt.Errorf("message empty, nothing sent")
