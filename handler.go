@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"path"
 	"strconv"
 	"strings"
 
@@ -23,7 +22,10 @@ type Webhook struct {
 }
 
 func (w Webhook) GetPath() string {
-	return path.Join(w.Path, "/")
+	if !strings.HasSuffix(w.Path, "/") {
+		return w.Path + "/"
+	}
+	return w.Path
 }
 
 func (w Webhook) ValidateTemplate() error {
