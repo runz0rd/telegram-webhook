@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"path"
 	"strconv"
 	"strings"
 
@@ -19,6 +20,10 @@ import (
 type Webhook struct {
 	Path            string `yaml:"path,omitempty"`
 	MessageTemplate string `yaml:"message_template,omitempty"`
+}
+
+func (w Webhook) GetPath() string {
+	return path.Join(w.Path, "/")
 }
 
 func (w Webhook) ValidateTemplate() error {
