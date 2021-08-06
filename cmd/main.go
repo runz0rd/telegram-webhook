@@ -33,6 +33,7 @@ func run(config string) error {
 			return err
 		}
 		http.HandleFunc(w.GetPath(), th.Handler)
+		log.Printf("handling path %v", w.GetPath())
 	}
 	log.Printf("serving on :%v", c.Port)
 	err = http.ListenAndServe(fmt.Sprintf(":%v", c.Port), nil)
