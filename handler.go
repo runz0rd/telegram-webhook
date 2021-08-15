@@ -135,10 +135,8 @@ func (th *TelegramHandler) shouldDeduplicate(newMessage string) bool {
 		return false
 	}
 	timestampStart := time.Now().Unix() - th.deduplicateRangeSec
-	inRange := 0
 	for sentTimestamp, sentMessage := range th.sentMessages {
 		if sentTimestamp >= timestampStart {
-			inRange += 1
 			if sentMessage == newMessage {
 				// if in time range and the message is the same, dont send another
 				return true
