@@ -137,17 +137,16 @@ func (th *TelegramHandler) shouldDeduplicate(newMessage string) bool {
 	timestampStart := time.Now().Unix() - th.deduplicateRangeSec
 	inRange := 0
 	for sentTimestamp, sentMessage := range th.sentMessages {
-		if sentTimestamp <= timestampStart {
+		if sentTimestamp >= timestampStart {
 			inRange += 1
 			if sentMessage == newMessage {
 				// if in time range and the message is the same, dont send another
 				return true
 			}
+		} else {
+			// remove item out of range
+			delete(th.sentMessages, sentTimestamp)
 		}
-	}
-	if inRange == 0 {
-		// if none are in range anymore, clear the map
-		th.sentMessages = make(map[int64]string)
 	}
 	return false
 }
