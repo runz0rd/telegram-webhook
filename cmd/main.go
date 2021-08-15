@@ -28,7 +28,7 @@ func run(config string) error {
 		if err := w.ValidateTemplate(); err != nil {
 			return err
 		}
-		th, err := telegramwebhook.NewTelegramHandler(c.BotToken, w.MessageTemplate)
+		th, err := telegramwebhook.NewTelegramHandler(c.BotToken, w.MessageTemplate, w.DeduplicateRangeSecond)
 		if err != nil {
 			return err
 		}

@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/pkg/errors"
@@ -17,8 +18,9 @@ import (
 )
 
 type Webhook struct {
-	Path            string `yaml:"path,omitempty"`
-	MessageTemplate string `yaml:"message_template,omitempty"`
+	Path                   string `yaml:"path,omitempty"`
+	MessageTemplate        string `yaml:"message_template,omitempty"`
+	DeduplicateRangeSecond int64  `yaml:"deduplicate_range_second,omitempty"`
 }
 
 func (w Webhook) GetPath() string {
@@ -56,16 +58,18 @@ func ReadConfig(path string) (*Config, error) {
 }
 
 type TelegramHandler struct {
-	botApi          *tgbotapi.BotAPI
-	messageTemplate string
+	botApi              *tgbotapi.BotAPI
+	messageTemplate     string
+	deduplicateRangeSec int64
+	sentMessages        map[int64]string
 }
 
-func NewTelegramHandler(botToken string, messageTemplate string) (*TelegramHandler, error) {
+func NewTelegramHandler(botToken string, messageTemplate string, deduplicateRangeSec int64) (*TelegramHandler, error) {
 	ba, err := tgbotapi.NewBotAPI(botToken)
 	if err != nil {
 		return nil, err
 	}
-	return &TelegramHandler{ba, messageTemplate}, nil
+	return &TelegramHandler{ba, messageTemplate, deduplicateRangeSec, make(map[int64]string)}, nil
 }
 
 func (th TelegramHandler) Handler(w http.ResponseWriter, req *http.Request) {
@@ -78,7 +82,7 @@ func (th TelegramHandler) Handler(w http.ResponseWriter, req *http.Request) {
 	return
 }
 
-func (th TelegramHandler) handle(req *http.Request) error {
+func (th *TelegramHandler) handle(req *http.Request) error {
 	if req.Method != "POST" {
 		return fmt.Errorf("you need to use POST")
 	}
@@ -103,6 +107,10 @@ func (th TelegramHandler) handle(req *http.Request) error {
 	if message == "" {
 		return fmt.Errorf("message empty, nothing sent")
 	}
+	// check if deduplication enabled
+	if th.shouldDeduplicate(message) {
+		return fmt.Errorf("message duplicate, nothing sent")
+	}
 	_, err = th.botApi.Send(tgbotapi.MessageConfig{
 		BaseChat: tgbotapi.BaseChat{
 			ChatID:           chatId,
@@ -115,8 +123,33 @@ func (th TelegramHandler) handle(req *http.Request) error {
 	if err != nil {
 		return err
 	}
+	//store for deduplication
+	th.sentMessages[time.Now().Unix()] = message
+
 	log.Printf("[%v]: successfully sent %q to %d", req.URL.Path, message, chatId)
 	return nil
+}
+
+func (th *TelegramHandler) shouldDeduplicate(newMessage string) bool {
+	if th.deduplicateRangeSec == 0 {
+		return false
+	}
+	timestampStart := time.Now().Unix() - th.deduplicateRangeSec
+	inRange := 0
+	for sentTimestamp, sentMessage := range th.sentMessages {
+		if sentTimestamp <= timestampStart {
+			inRange += 1
+			if sentMessage == newMessage {
+				// if in time range and the message is the same, dont send another
+				return true
+			}
+		}
+	}
+	if inRange == 0 {
+		// if none are in range anymore, clear the map
+		th.sentMessages = make(map[int64]string)
+	}
+	return false
 }
 
 func executeTemplate(templ string, data map[string]interface{}) (string, error) {

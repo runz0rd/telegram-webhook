@@ -51,7 +51,7 @@ func TestTelegramHandler_Handler(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			th, err := NewTelegramHandler(c.BotToken, tt.args.template)
+			th, err := NewTelegramHandler(c.BotToken, tt.args.template, 0)
 			if err != nil {
 				t.Error(err)
 			}

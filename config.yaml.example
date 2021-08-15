@@ -1,5 +1,6 @@
 webhooks:
   - path: "/app1"
     message_template: "{{.text}}"
+    deduplicate_range_second: 300 # optional
 bot_token: ""
 port: 8080
