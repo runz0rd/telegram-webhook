@@ -124,7 +124,7 @@ func (th *TelegramHandler) handle(req *http.Request) error {
 		return err
 	}
 	//store for deduplication
-	th.sentMessages[time.Now().Unix()] = message
+	th.sentMessages[time.Now().UnixNano()] = message
 
 	log.Printf("[%v]: successfully sent %q to %d", req.URL.Path, message, chatId)
 	return nil
@@ -134,7 +134,7 @@ func (th *TelegramHandler) shouldDeduplicate(newMessage string) bool {
 	if th.deduplicateRangeSec == 0 {
 		return false
 	}
-	timestampRangeStart := time.Now().Unix() - th.deduplicateRangeSec
+	timestampRangeStart := time.Now().UnixNano() - th.deduplicateRangeSec*time.Hour.Nanoseconds()
 	for sentTimestamp, sentMessage := range th.sentMessages {
 		if sentTimestamp < timestampRangeStart {
 			delete(th.sentMessages, sentTimestamp)
