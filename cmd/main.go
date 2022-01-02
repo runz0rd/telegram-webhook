@@ -3,10 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"net/http"
 
 	telegramwebhook "github.com/runz0rd/telegram-webhook"
+	log "github.com/sirupsen/logrus"
 )
 
 func main() {
@@ -24,6 +24,9 @@ func run(config string) error {
 	if err != nil {
 		return err
 	}
+	if c.Debug {
+		log.SetLevel(log.DebugLevel)
+	}
 	for _, w := range c.Webhooks {
 		if err := w.ValidateTemplate(); err != nil {
 			return err
@@ -33,7 +36,7 @@ func run(config string) error {
 			return err
 		}
 		http.HandleFunc(w.GetPath(), th.Handler)
-		log.Printf("handling path %v", w.GetPath())
+		log.Debugf("handling path %v", w.GetPath())
 	}
 	log.Printf("serving on :%v", c.Port)
 	err = http.ListenAndServe(fmt.Sprintf(":%v", c.Port), nil)

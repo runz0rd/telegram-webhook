@@ -4,3 +4,4 @@ webhooks:
     deduplicate_range_second: 300 # optional
 bot_token: ""
 port: 8080
+debug: true

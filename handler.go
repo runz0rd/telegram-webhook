@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"html/template"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -14,6 +13,7 @@ import (
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 )
 
@@ -42,6 +42,7 @@ type Config struct {
 	Webhooks []Webhook `yaml:"webhooks,omitempty"`
 	BotToken string    `yaml:"bot_token,omitempty"`
 	Port     int       `yaml:"port,omitempty"`
+	Debug    bool      `yaml:"debug,omitempty"`
 }
 
 func ReadConfig(path string) (*Config, error) {
@@ -77,7 +78,7 @@ func (th TelegramHandler) Handler(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		err = errors.Wrapf(err, "[%v]", req.URL.Path)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Print(err)
+		log.Error(err)
 	}
 	return
 }
@@ -100,6 +101,7 @@ func (th *TelegramHandler) handle(req *http.Request) error {
 	if err != nil {
 		return errors.Wrap(err, "json decode error")
 	}
+	log.Debug(data)
 	message, err := executeTemplate(th.messageTemplate, data)
 	if err != nil {
 		return err
@@ -126,7 +128,7 @@ func (th *TelegramHandler) handle(req *http.Request) error {
 	//store for deduplication
 	th.sentMessages[time.Now().UnixNano()] = message
 
-	log.Printf("[%v]: successfully sent %q to %d", req.URL.Path, message, chatId)
+	log.Debugf("[%v]: successfully sent %q to %d", req.URL.Path, message, chatId)
 	return nil
 }
 
