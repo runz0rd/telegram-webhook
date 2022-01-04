@@ -11,8 +11,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 )
@@ -101,7 +103,9 @@ func (th *TelegramHandler) handle(req *http.Request) error {
 	if err != nil {
 		return errors.Wrap(err, "json decode error")
 	}
-	log.Debug(data)
+	if log.GetLevel() == logrus.DebugLevel {
+		spew.Dump(data)
+	}
 	message, err := executeTemplate(th.messageTemplate, data)
 	if err != nil {
 		return err
