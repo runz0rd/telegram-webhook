@@ -163,5 +163,9 @@ func executeTemplate(templ string, data map[string]interface{}) (string, error) 
 	if err := t.Execute(buf, data); err != nil {
 		return "", errors.Wrap(err, "template cant be executed")
 	}
-	return buf.String(), nil
+	v, err := strconv.Unquote(buf.String())
+	if err != nil {
+		return "", errors.Wrapf(err, "value %q cant be unquoted", buf.String())
+	}
+	return v, nil
 }
