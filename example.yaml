@@ -1,5 +1,5 @@
 webhooks:
-  - path: "/app1"
+  - path: "/app"
     message_template: "{{.text}}"
     deduplicate_range_second: 300 # optional
 bot_token: ""

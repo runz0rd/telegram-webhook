@@ -7,6 +7,8 @@ import (
 	"path"
 	"strings"
 	"testing"
+
+	"github.com/davecgh/go-spew/spew"
 )
 
 func TestTelegramHandler_Handler(t *testing.T) {
@@ -68,6 +70,30 @@ func TestTelegramHandler_Handler(t *testing.T) {
 				t.Errorf("handler returned wrong status code: got %v want %v",
 					status, http.StatusOK)
 			}
+		})
+	}
+}
+
+func Test_executeTemplate(t *testing.T) {
+	type args struct {
+		templ string
+		data  map[string]interface{}
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{"debug", args{"{{.text}}", map[string]interface{}{"text": fmt.Sprint(`Error creating: pods "helm-install-traefik-crd-" is forbidden: error looking up service account`)}}, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := executeTemplate(tt.args.templ, tt.args.data)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("executeTemplate() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			spew.Dump(got)
 		})
 	}
 }

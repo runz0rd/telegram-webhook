@@ -163,5 +163,5 @@ func executeTemplate(templ string, data map[string]interface{}) (string, error) 
 	if err := t.Execute(buf, data); err != nil {
 		return "", errors.Wrap(err, "template cant be executed")
 	}
-	return strings.ReplaceAll(buf.String(), "\\", ""), nil
+	return strings.ReplaceAll(buf.String(), "&#34;", `"`), nil
 }
